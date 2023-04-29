@@ -1,0 +1,28 @@
+deployments: # map of deployment objects
+  project_core: # name of deployment
+    triggers:
+      - path: "/plat/p/(.*)/resources/lala.yaml"
+        inputs:
+          service_tier:
+            type: "regex_match_group"
+            value: 1
+      - path: "/res/proj/(.*)/common.yaml"
+        inputs:
+          project_code:
+            type: "regex_match_group"
+            value: 1
+          service_tier:
+            type: "scalar"
+            value: "nonp"
+  org_service_controls: # name of deployment
+    triggers:
+      - path: "/plat/p/vpcsc/nonp/*.yaml"
+        inputs:
+          service_tier:
+            type: "scalar"
+            value: "nonp"
+      - path: "/plat/p/vpcsc/lala.yaml"
+        inputs:
+          service_tier:
+            type: "scalar"
+            value: "nonp"

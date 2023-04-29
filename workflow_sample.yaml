@@ -1,0 +1,12 @@
+1: 
+  description: “This is the first stage”
+  deployments:
+    project_core:
+      parameters: {}
+    org_service_controls:
+      parameters: {}
+2: 
+  description: “This is the second stage”
+  deployments:
+    secrets:
+      parameters: {}

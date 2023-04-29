@@ -1,0 +1,48 @@
+- description: "This is the second stage"
+  sequence: 2
+  deployments:
+    secrets:
+      triggers:
+        - path: "/no/p/(.*)/resources/lala.yaml"
+          inputs:
+            service_tier:
+              type: "regex_match_group"
+              value: 1
+        - path: "/res/proj/(.*)/common.yaml"
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
+            service_tier:
+              type: "scalar"
+              value: "nonp"
+- description: "This is the first stage"
+  sequence: 1
+  deployments:
+    project_core:
+      triggers:
+        - path: "\/plat\/p\/(.*)\/resources\/lala.yaml"
+          inputs:
+            service_tier:
+              type: "regex_match_group"
+              value: 1
+        - path: "/res/proj/(.*)/common.yaml"
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
+            service_tier:
+              type: "scalar"
+              value: "nonp"
+    org_service_controls:
+      triggers:
+        - path: "/no/p/vpcsc/nonp/*.yaml"
+          inputs:
+            service_tier:
+              type: "scalar"
+              value: "nonp"
+        - path: "/no/p/vpcsc/lala.yaml"
+          inputs:
+            service_tier:
+              type: "scalar"
+              value: "nonp"
