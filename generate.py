@@ -26,10 +26,7 @@ class Deployment:
         self.parameters = parameters
 
     def is_active(self, changed_files: List[str]) -> bool:
-        for trigger in self.triggers:
-            if trigger.is_triggered(changed_files):
-                return True
-        return False
+        pass
 
 class Stage:
     def __init__(self, description: str, sequence: int, deployments: List[Deployment]):
@@ -93,7 +90,7 @@ changed_files = ["/resource_config/projects/001/nonp/iam/roles.yaml",
 
 workflow = Workflow('workflow_template.yaml', changed_files)
 
-#workflow.process()
+workflow.process()
 
 print(workflow.to_yaml())
 '''
@@ -104,8 +101,12 @@ for stage in workflow.stages:
         #print("Deployment:".format(deployment))
         for trigger in deployment.triggers:
             print(trigger.path, trigger.is_triggered())
-# Pass changed files to trigger
-# Pass changed files to trigger
-# Pass changed files to trigger
-# Pass changed files to trigger
 '''
+# Pass changed files to trigger
+# Pass changed files to trigger
+# Pass changed files to trigger
+# Pass changed files to trigger
+
+
+# you must read deployment_units to validate that project_code is list_or_all and act accordingly
+# for now just assume it is by default
