@@ -1,0 +1,11 @@
+
+project_core:
+  triggers:
+    - path: "/platform_config/projects/(\\d{3})/.*.yaml"
+      inputs:
+        project_code:
+          type: "regex_match_group"
+          value: 1
+        service_tier:
+          type: "scalar"
+          value: "nonp"
