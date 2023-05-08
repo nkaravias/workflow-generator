@@ -1,4 +1,5 @@
 import re
+import yaml
 from typing import List
 
 
@@ -13,23 +14,32 @@ class Trigger:
     def __init__(self, path: str, inputs: List[TriggerInput]):
         self.path = path         # the regex path of a trigger (each path has 1-* parameter inputs of scalar or regex type)
         self.inputs = inputs     # a list of TriggerInputs objects
-        self.input_params = []   # the k:v pair of inputs after being processed (matched to a file)  
+        self.input_params = []   # the k:v pair of inputs after being processed (matched to a file) 
+        # [{service_tier="nonp", project_code="003"}
+        # {service_tier="nonp", project_code="002"}] 
         self.matching_files = [] # the path of the files that have matched to a trigger path regex
         self.triggered = False
 
     def process(self, changed_files: List[str]) -> dict:
+        '''
+            If the trigger.path matches with any file in the changed_files list
+            1) set triggered = True
+            2) process all trigger inputs
+        '''
         for file in changed_files:
+            # Convert to raw string so we don't have to escape all the backslashes
+            # for the path string
             raw_path = r"" + self.path
             match_re = re.match(raw_path, file)
             if match_re:
-                print(f"Trigger path {self.path} matched with file:{file}")
+                #print(f"Trigger path {self.path} matched with file:{file}")
                 self.matching_files.append(file)
                 self.triggered = True
-                self.input_params.append(self.single_trigger_match_input_params(match_re))
+                self.input_params.append(self.get_params(match_re))
             else:
                 print(f"Trigger path {self.path} did NOT match with file:{file}")
 
-    def single_trigger_match_input_params(self, match_re):
+    def get_params(self, match_re):
         ''' For a matched file, process the template trigger inputs
         Return a map with { input_1_name: input1_1_value ... n }
         if the input type is scalar just return input_value as is
@@ -48,17 +58,18 @@ class Deployment:
         self.name = name
         self.triggers = triggers
         self.parameters = {}
+        self.active = False
 
     def is_active(self, changed_files: List[str]) -> bool:
         for trigger in self.triggers:
-            input_dict = trigger.get_params()
-            if input_dict:
-                self.parameters.update(input_dict)
-                print("Adding to deployment parameters:{}".format(input_dict))
+            trigger.process(changed_files)
+            parameters_list = trigger.input_params
+            if parameters_list:
                 return True
         return False
 
-changed_files = [
+
+changed_files = [#"/resource_config/projects/001/nonp/iam/roles.yaml",
                  "/resource_config/projects/001/nonp/policies.yaml",
                  "/platform_config/projects/006/koko.yaml",
                  "/platform_config/projects/002/lala.yaml"
@@ -95,28 +106,3 @@ for trigger in triggers:
 #deployments[0].is_active(changed_files)
 #print("{} params = {}".format(deployments[0].name, deployments[0].parameters))
 
-
-'''
-#Testing raw strings and regex matches
-normal_string = "/platform_config/projects/(\\d{3})/.*yaml"
-raw_string = r"" + normal_string
-
-changed = "/platform_config/projects/002/lala.yaml"
-
-print(normal_string)
-print(raw_string)
-
-match = re.match(raw_string, changed)
-print(match)
-print(match.group(1))
-'''
-'''
-+ for each matching file of this trigger
-+ if regex
-+   if project code
-+     project_code = list of matches
-+     (append / insert)
-+     at the end of matching files, if all is in the list, set it to [all]
-+ if scalar
-+   if different than previous --> error
-'''

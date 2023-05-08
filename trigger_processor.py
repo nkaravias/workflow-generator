@@ -14,7 +14,9 @@ class Trigger:
     def __init__(self, path: str, inputs: List[TriggerInput]):
         self.path = path         # the regex path of a trigger (each path has 1-* parameter inputs of scalar or regex type)
         self.inputs = inputs     # a list of TriggerInputs objects
-        self.input_params = []   # the k:v pair of inputs after being processed (matched to a file)  
+        self.input_params = []   # the k:v pair of inputs after being processed (matched to a file) 
+        # [{service_tier="nonp", project_code="003"}
+        # {service_tier="nonp", project_code="002"}] 
         self.matching_files = [] # the path of the files that have matched to a trigger path regex
         self.triggered = False
 
@@ -38,14 +40,14 @@ class Trigger:
             raw_path = r"" + self.path
             match_re = re.match(raw_path, file)
             if match_re:
-                print(f"Trigger path {self.path} matched with file:{file}")
+                #print(f"Trigger path {self.path} matched with file:{file}")
                 self.matching_files.append(file)
                 self.triggered = True
-                self.input_params.append(self.single_trigger_match_input_params(match_re))
+                self.input_params.append(self.get_params(match_re))
             else:
                 print(f"Trigger path {self.path} did NOT match with file:{file}")
 
-    def single_trigger_match_input_params(self, match_re):
+    def get_params(self, match_re):
         ''' For a matched file, process the template trigger inputs
         Return a map with { input_1_name: input1_1_value ... n }
         if the input type is scalar just return input_value as is
@@ -64,13 +66,16 @@ class Deployment:
         self.name = name
         self.triggers = triggers
         self.parameters = {}
+        self.active = False
 
     def is_active(self, changed_files: List[str]) -> bool:
         for trigger in self.triggers:
-            input_dict = trigger.get_params()
-            if input_dict:
-                self.parameters.update(input_dict)
-                print("Adding to deployment parameters:{}".format(input_dict))
+            trigger.process(changed_files)
+            parameters_list = trigger.input_params
+            print(parameters_list)
+            if parameters_list:
+            #    self.parameters.update(parameters_list)
+            #    print("Adding to deployment parameters:{}".format(parameters_list))
                 return True
         return False
 
@@ -94,7 +99,7 @@ changed_files = ["/resource_config/projects/001/nonp/iam/roles.yaml",
 '''
 
 
-
+'''
 changed_files = [#"/resource_config/projects/001/nonp/iam/roles.yaml",
                  "/resource_config/projects/001/nonp/policies.yaml",
                  "/platform_config/projects/006/koko.yaml",
@@ -131,6 +136,42 @@ for trigger in triggers:
 #deployments.append(Deployment("deployment_name", triggers))
 #deployments[0].is_active(changed_files)
 #print("{} params = {}".format(deployments[0].name, deployments[0].parameters))
+'''
+# Create Trigger Inputs
+trigger_inputs = [
+    TriggerInput("project_code", "regex_match_group", "1"),
+    TriggerInput("service_tier", "scalar", "nonp"),
+    TriggerInput("environment", "scalar", "dev")
+]
+
+# Create Trigger
+trigger = Trigger("/platform_config/projects/(\\d{3})/.*.yaml", trigger_inputs)
+
+# Create Deployment
+deployment = Deployment("bob", [trigger])
+
+# Test with changed files
+changed_files = [
+    "a/platform_config/projects/001/nonp/abc.yaml",
+    "/platform_config/projects/002/nonp/xyz.yaml",
+    "a/platform_config/projects/003/nonp/123.yaml",
+    "/platform_config/projects/004/nonp/test.yaml"
+]
+
+print(deployment.is_active(changed_files))
+
+for trigger in deployment.triggers:
+    print(trigger.input_params)
+    #for params in trigger.input_params:
+    #    print(params)
+print(deployment.parameters)
 
 
-
+#for trigger in deployment.triggers:
+#    print(f"Trigger Path: {trigger.path}")
+#    print("Input Params:")
+#    for params in trigger.input_params:
+#        print(params)
+#    #print()
+#
+#
