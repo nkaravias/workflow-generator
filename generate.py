@@ -74,7 +74,7 @@ class Deployment:
         self.active = False
 
 
-    def is_active(self, changed_files: List[str]) -> bool:
+    def process(self, changed_files: List[str]) -> bool:
         active_triggers = []  # List to store the input parameters of active triggers
 
         # Process all triggers and collect input parameters of active triggers
@@ -180,6 +180,7 @@ def generate_workflow_from_template(workflow_template_path: str, changed_files: 
                     trigger_inputs.append(TriggerInput(input_name, input_data["type"], input_data["value"]))
                 triggers.append(Trigger(trigger_data["path"], trigger_inputs))
             deployment = Deployment(deployment_name, triggers)
+            deployment.process(changed_files)        
             stage.add_deployment(deployment)
         workflow.add_stage(stage)
 
@@ -200,12 +201,9 @@ changed_files = [
 workflow_template_path = "workflow_template_test.yaml"
 workflow = generate_workflow_from_template(workflow_template_path, changed_files)
 
-#workflow = Workflow('workflow_template_test.yaml', changed_files)
-
-for stage in workflow.stages:
-    #print(f"Stage: {stage.description}")
-    for deployment in stage.deployments:
-        deployment.is_active(changed_files)
+#for stage in workflow.stages:
+#    for deployment in stage.deployments:
+#        deployment.process(changed_files)
 
 print(workflow.to_yaml())
 
@@ -237,7 +235,7 @@ changed_files = [
 
 print(deployment.name)
 print(deployment.parameters)
-deployment.is_active(changed_files)
+deployment.process(changed_files)
 print(deployment.parameters)
 '''
 
@@ -247,4 +245,6 @@ print(deployment.parameters)
 # Validate the workflow_template
 # Test more than one trigger before doing this
 # Accept changed files as an input
+# Add a logger instead of print with default output to output.log
+# Add cli with verbosity
 
