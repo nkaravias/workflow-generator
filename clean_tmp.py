@@ -9,23 +9,21 @@ class TriggerInput:
         self.input_type = input_type
         self.value = value
 
+    def __str__(self):
+        return f"{self.name}: {self.value} ({self.input_type})"
+
 
 class Trigger:
     def __init__(self, path: str, inputs: List[TriggerInput]):
         self.path = path         # the regex path of a trigger (each path has 1-* parameter inputs of scalar or regex type)
         self.inputs = inputs     # a list of TriggerInputs objects
         self.input_params = []   # the k:v pair of inputs after being processed (matched to a file) 
-        # [{service_tier="nonp", project_code="003"}
-        # {service_tier="nonp", project_code="002"}] 
         self.matching_files = [] # the path of the files that have matched to a trigger path regex
         self.triggered = False
 
+
+
     def process(self, changed_files: List[str]) -> dict:
-        '''
-            If the trigger.path matches with any file in the changed_files list
-            1) set triggered = True
-            2) process all trigger inputs
-        '''
         for file in changed_files:
             # Convert to raw string so we don't have to escape all the backslashes
             # for the path string
@@ -59,50 +57,62 @@ class Deployment:
         self.triggers = triggers
         self.parameters = {}
         self.active = False
-
+'''
     def is_active(self, changed_files: List[str]) -> bool:
         for trigger in self.triggers:
             trigger.process(changed_files)
             parameters_list = trigger.input_params
+            print(parameters_list)
             if parameters_list:
+                self.parameters.update(parameters_list)
+                print("Adding to deployment parameters:{}".format(parameters_list))
                 return True
         return False
+'''
+
+    def is_active(self, changed_files: List[str]) -> bool:
+        parameters_list = []  # Accumulate input parameters from all triggers
+        for trigger in self.triggers:
+            trigger.process(changed_files)
+            parameters_list.extend(trigger.input_params)
+            if trigger.input_params:
+                self.active = True
+
+        # Update the parameters dictionary with the accumulated input parameters
+        for param in parameters_list:
+            print(param)
+            #self.parameters.update(param)
+
+        return self.active
 
 
-changed_files = [#"/resource_config/projects/001/nonp/iam/roles.yaml",
-                 "/resource_config/projects/001/nonp/policies.yaml",
-                 "/platform_config/projects/006/koko.yaml",
-                 "/platform_config/projects/002/lala.yaml"
-                 ]
+# Create Trigger Inputs
+trigger_inputs = [
+    TriggerInput("project_code", "regex_match_group", "1"),
+    TriggerInput("service_tier", "scalar", "nonp"),
+    TriggerInput("environment", "scalar", "dev"),
+    #TriggerInput("someparam", "regex_match_group", "2")
+]
 
-trigger_inputs = []
-stier = TriggerInput(name='service_tier', input_type='scalar', value='nonp')
-scode = TriggerInput(name='project_code', input_type='scalar', value='001')
-rtier = TriggerInput(name='service_tier',
-                     input_type='regex_match_group', value=1)
-rcode = TriggerInput(name='project_code',
-                     input_type='regex_match_group', value=1)
-trigger_inputs.append(stier)
-trigger_inputs.append(rcode)
+# Create Trigger
+trigger = Trigger("/platform_config/projects/(\\d{3})/.*.yaml", trigger_inputs)
 
-triggers = []
-paths = {}
-paths["n001"] = "/resource_config/projects/001/nonp/policies.yaml"
-paths["nonp-project"] = "/resource_config/projects/(.*)/nonp/policies.yaml"
-#paths["plat-tier"] = "/platform_config/projects/(.*)/*.yaml"
-paths["plat-tier"] = "/platform_config/projects/(\\d{3})/.*.yaml"
-#triggers.append(Trigger(paths["n001"], trigger_inputs))
-#triggers.append(Trigger(paths["nonp-project"], trigger_inputs))
-triggers.append(Trigger(paths["plat-tier"], trigger_inputs))
 
-for trigger in triggers:
-    trigger.process(changed_files)
-    print("Matched files: {}".format(trigger.matching_files))
-    print("Trigger inputs: {}".format(trigger.input_params))
-    #print(trigger.get_params())
+# Create Deployment
+deployment = Deployment("bob", [trigger])
 
-#deployments = []
-#deployments.append(Deployment("deployment_name", triggers))
-#deployments[0].is_active(changed_files)
-#print("{} params = {}".format(deployments[0].name, deployments[0].parameters))
+# Test with changed files
+changed_files = [
+    "a/platform_config/projects/001/nonp/abc.yaml",
+    "s/platform_config/projects/002/nonp/xyz.yaml",
+    "/platform_config/projects/003/nonp/123.yaml",
+    "/platform_config/projects/004/nonp/test.yaml"
+]
 
+for i in trigger.inputs:
+    print(i)
+
+print(deployment.name)
+print(deployment.parameters)
+deployment.is_active(changed_files)
+print(deployment.parameters)
