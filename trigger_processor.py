@@ -45,7 +45,7 @@ class Trigger:
             raw_path = r"" + self.path
             match_re = re.match(raw_path, file)
             if match_re:
-                #print(f"Trigger path {self.path} matched with file:{file}")
+                print(f"Trigger path {self.path} matched with file:{file}")
                 self.matching_files.append(file)
                 self.triggered = True
                 self.input_params.append(self.get_params(match_re))
@@ -93,118 +93,124 @@ class Deployment:
 
         # Update the deployment parameters with the processed parameters
         self.parameters.update(parameters)
-
+        
+        self.active = True
         return True
 
     def process_parameters(self, active_triggers: List[dict]) -> dict:
+        ''' processes a list of parameter dictionaries that have been triggered 
+            and updates the parameters dictionary of the deployment
+
+            e.g [{'project_code': '003', 'service_tier': 'nonp', 'environment': 'dev'}, {'project_code': '001'}]
+            becomes {'project_code': '001,003', 'service_tier': 'nonp', 'environment': 'dev'}
+        '''
+        # TODO in theory we should be reading deployment_units.yaml and catching the type of each input parameter in that deployment
+        # TODO that way we can apply if "all" type logic in where applicable (e.g project_code parameters)
+
         parameters = {}
         project_codes = set()
+        has_inputs = False  # Track if the deployment has any input parameters
+        for params_dict in active_triggers:
+            if params_dict:
+                has_inputs = True  # Set the flag to True since there are input parameters
+                for key, value in params_dict.items():
+                    if key == "project_code":
+                        project_codes.add(value)
+                    elif key in parameters:
+                        if parameters[key] != value:
+                            raise ValueError(f"Scalar value mismatch detected for parameter '{key}' in active triggers.")
+                    else:
+                        parameters[key] = value
 
-        for params in active_triggers:
-            for key, value in params.items():
-                if key == "project_code":
-                    project_codes.add(value)
-                elif key in parameters:
-                    # Check if a different value is detected for a parameter in active triggers
-                    if parameters[key] != value:
-                        raise ValueError(f"Different values detected for parameter '{key}' in active triggers.")
-                else:
-                    # Add the parameter to the deployment parameters
-                    parameters[key] = value
-
-        # Update the 'project_code' parameter with comma-separated values
+        if not has_inputs:
+            return {}  # Return an empty dictionary if there are no input parameters
+        # Otherwise add to the comma separated 
         parameters["project_code"] = ",".join(project_codes)
 
         return parameters
+    
+
+class Stage:
+    def __init__(self, description: str, sequence: int):
+        self.description = description
+        self.sequence = sequence
+        self.deployments = []
+
+    def add_deployment(self, deployment: Deployment):
+        self.deployments.append(deployment)
+
+
+class Workflow:
+    def __init__(self, workflow_template: str, changed_files: List[str]):
+        self.stages = []
+        self.changed_files = changed_files
+
+    def add_stage(self, stage: Stage):
+        self.stages.append(stage)
+
+    def to_yaml(self) -> str:
+        workflow_dict = {}
+        for stage in self.stages:
+            stage_dict = {
+                "description": stage.description,
+                "deployments": {}
+            }
+            for deployment in stage.deployments:
+                deployment_dict = {
+                    "active": deployment.active,
+                    "parameters": deployment.parameters
+                }
+                stage_dict["deployments"][deployment.name] = deployment_dict
+            workflow_dict[stage.sequence] = stage_dict
+        return yaml.dump(workflow_dict)
+
+
+def generate_workflow_from_template(workflow_template_path: str, changed_files: List[str]) -> Workflow:
+    workflow = Workflow(workflow_template_path, changed_files)
+    with open(workflow_template_path, 'r') as f:
+        template = yaml.safe_load(f)
+
+    for stage_template in template:
+        stage = Stage(stage_template["description"], stage_template["sequence"])
+        for deployment_name, deployment_data in stage_template["deployments"].items():
+            triggers = []
+            for trigger_data in deployment_data["triggers"]:
+                trigger_inputs = []
+                for input_name, input_data in trigger_data["inputs"].items():
+                    trigger_inputs.append(TriggerInput(input_name, input_data["type"], input_data["value"]))
+                triggers.append(Trigger(trigger_data["path"], trigger_inputs))
+            deployment = Deployment(deployment_name, triggers)
+            stage.add_deployment(deployment)
+        workflow.add_stage(stage)
+
+    return workflow
 
 
 
 
+# Example usage
+changed_files = [
+    "/resource_config/projects/001/nonp/abc.yaml",
+    "/resource_config/projects/002/nonp/xyz.yaml",
+    "/platform_config/projects/003/nonp/123.yaml",
+    "/platform_config/projects/004/nonp/test.yaml",
+    "/platform_config/org/lala.yaml"
+]
 
-'''    
-    def is_active(self, changed_files: List[str]) -> bool:
-        parameters_list = []  # Accumulate input parameters from all triggers
-        for trigger in self.triggers:
-            trigger.process(changed_files)
-            parameters_list.extend(trigger.input_params)
-            if trigger.input_params:
-                self.active = True
-                print(trigger.input_params)
+workflow_template_path = "workflow_template_test.yaml"
+workflow = generate_workflow_from_template(workflow_template_path, changed_files)
 
-        # Update the parameters dictionary with the accumulated input parameters
-        for param in parameters_list:
-            #print(param)
-            self.parameters.update(param)
-'''
-'''
-    def is_active(self, changed_files: List[str]) -> bool:
-        for trigger in self.triggers:
-            trigger.process(changed_files)
-            parameters_list = trigger.input_params
-            print(parameters_list)
-            if parameters_list:
-                self.parameters.update(parameters_list)
-                print("Adding to deployment parameters:{}".format(parameters_list))
-                return True
-        return False
-'''
+#workflow = Workflow('workflow_template_test.yaml', changed_files)
 
-'''
-    def is_triggered(self, changed_files: List[str]) -> bool:
-        path_regex = re.compile(self.path)
-        for file in changed_files:
-            if path_regex.match(file):
-                return True
-        return False
-'''
-'''
-changed_files = ["/resource_config/projects/001/nonp/iam/roles.yaml",
-                 "/resource_config/projects/001/nonp/policies.yaml",
-                 "/resource_config/projects/002/nonp/core.yaml",
-                 "/platform_config/projects/nonp/resources/lala.yaml",
-                 "/platform_config/org/vpc_service_controls/access.yaml",
-                 "/platform_config/org/vpc_service_controls/nonp/internal.yaml"
-                 ]
-'''
+for stage in workflow.stages:
+    #print(f"Stage: {stage.description}")
+    for deployment in stage.deployments:
+        deployment.is_active(changed_files)
+
+print(workflow.to_yaml())
 
 
-'''
-changed_files = [#"/resource_config/projects/001/nonp/iam/roles.yaml",
-                 "/resource_config/projects/001/nonp/policies.yaml",
-                 "/platform_config/projects/006/koko.yaml",
-                 "/platform_config/projects/002/lala.yaml"
-                 ]
 
-trigger_inputs = []
-stier = TriggerInput(name='service_tier', input_type='scalar', value='nonp')
-scode = TriggerInput(name='project_code', input_type='scalar', value='001')
-rtier = TriggerInput(name='service_tier',
-                     input_type='regex_match_group', value=1)
-rcode = TriggerInput(name='project_code',
-                     input_type='regex_match_group', value=1)
-trigger_inputs.append(stier)
-trigger_inputs.append(rcode)
-
-triggers = []
-paths = {}
-paths["n001"] = "/resource_config/projects/001/nonp/policies.yaml"
-paths["nonp-project"] = "/resource_config/projects/(.*)/nonp/policies.yaml"
-#paths["plat-tier"] = "/platform_config/projects/(.*)/*.yaml"
-paths["plat-tier"] = "/platform_config/projects/(\\d{3})/.*.yaml"
-#triggers.append(Trigger(paths["n001"], trigger_inputs))
-#triggers.append(Trigger(paths["nonp-project"], trigger_inputs))
-triggers.append(Trigger(paths["plat-tier"], trigger_inputs))
-
-for trigger in triggers:
-    trigger.process(changed_files)
-    print("Matched files: {}".format(trigger.matching_files))
-    print("Trigger inputs: {}".format(trigger.input_params))
-    #print(trigger.get_params())
-
-#deployments = []
-#deployments.append(Deployment("deployment_name", triggers))
-#deployments[0].is_active(changed_files)
-#print("{} params = {}".format(deployments[0].name, deployments[0].parameters))
 '''
 # Create Trigger Inputs
 trigger_inputs = [
@@ -233,26 +239,12 @@ print(deployment.name)
 print(deployment.parameters)
 deployment.is_active(changed_files)
 print(deployment.parameters)
+'''
 
 
 # TODO 
 # Make sure if someone sets a match group that doesn't match, index error is caught
-
-# Glue everything together and generate deployments now that we're getting params
+# Validate the workflow_template
 # Test more than one trigger before doing this
+# Accept changed files as an input
 
-
-#with open(workflow_template, 'r') as f:
-#    template = yaml.safe_load(f)
-#
-#deployments = []
-#for deployment_name, deployment_data in stage_template["deployments"].items():
-#    triggers = []
-#    for trigger_data in deployment_data["triggers"]:
-#        trigger_inputs = []
-#        for input_name, input_data in trigger_data["inputs"].items():
-#            trigger_inputs.append(TriggerInput(input_name, input_data["type"], input_data["value"]))
-#        triggers.append(Trigger(trigger_data["path"], trigger_inputs))
-#    deployments.append(Deployment(deployment_name, triggers, parameters={}))
-#stage = Stage(stage_template["description"], stage_template["sequence"], deployments)
-#self.stages.append(stage)
