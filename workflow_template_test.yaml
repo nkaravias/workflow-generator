@@ -18,7 +18,7 @@
             environment:
               type: "scalar"
               value: "dev"
-        - path: "/resource_config/projects/(\\d{3})/.*.yaml"
+        - path: "/resource_config/projects/(\\d{3})/*.yaml"
           inputs:
             project_code:
               type: "regex_match_group"
@@ -41,3 +41,13 @@
       triggers:
         - path: "/platform_config/network/*.yaml"
           inputs: {}
+- description: "This is the third stage"
+  sequence: 3
+  deployments:
+    secrets:
+      triggers:
+        - path: "/platform_config/projects/006/.*.secret.yaml"
+          inputs:
+            project_code:
+              type: "scalar"
+              value: "006"
