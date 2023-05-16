@@ -40,7 +40,10 @@
     network:
       triggers:
         - path: "/platform_config/network/*.yaml"
-          inputs: {}
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
 - description: "This is the third stage"
   sequence: 3
   deployments:
