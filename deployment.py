@@ -77,5 +77,3 @@ class Deployment:
         # Update the project_code parameter with the consolidated values
         parameters["project_code"] = ",".join(project_codes)
         return parameters
-    
-    
