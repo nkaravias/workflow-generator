@@ -1,111 +1,27 @@
-import re
-import yaml
-from typing import List
+from workflow_manager import WorkflowManager
 
-class TriggerInput:
-    def __init__(self, name: str, input_type: str, value: str):
-        self.name = name
-        self.input_type = input_type
-        self.value = value
+if __name__ == "__main__":
+    changed_files = [
+        "/resource_config/projects/001/nonp/abc.yaml",
+        "/resource_config/projects/002/nonp/xyz.yaml",
+        "/platform_config/projects/003/nonp/123.yaml",
+        "/platform_config/projects/004/nonp/test.yaml",
+        "/platform_config/projects/006/test/secret.yaml",
+        "/platform_config/org/lala.yaml"
+    ]
 
-class Trigger:
-    def __init__(self, path: str, inputs: List[TriggerInput]):
-        self.path = path
-        self.inputs = inputs
+    workflow_template_path = "workflow_template_test.yaml"
+    workflow_manager = WorkflowManager(workflow_template_path, changed_files)
+    workflow = workflow_manager.generate_workflow()
 
-    def is_triggered(self, changed_files: List[str]) -> bool:
-        for file in changed_files:
-            if re.match(self.path, file):
-                return True
-        return False
-
-class Deployment:
-    def __init__(self, name: str, triggers: List[Trigger], parameters: dict):
-        self.name = name
-        self.triggers = triggers
-        self.parameters = parameters
-
-    def is_active(self, changed_files: List[str]) -> bool:
-        for trigger in self.triggers:
-            if trigger.is_triggered(changed_files):
-                return True
-        return False
-
-class Stage:
-    def __init__(self, description: str, sequence: int, deployments: List[Deployment]):
-        self.description = description
-        self.sequence = sequence
-        self.deployments = deployments
-
-class Workflow:
-    def __init__(self, workflow_template: str, changed_files: List[str]):
-        self.stages = []
-        self._generate_stages(workflow_template)
-        self.stages = sorted(self.stages, key=lambda s: s.sequence)  # sort the stages
-        self.changed_files = changed_files
-
-    def _generate_stages(self, workflow_template: str):
-        with open(workflow_template, 'r') as f:
-            template = yaml.safe_load(f)
-
-        for stage_template in template:
-            deployments = []
-            for deployment_name, deployment_data in stage_template["deployments"].items():
-                triggers = []
-                for trigger_data in deployment_data["triggers"]:
-                    trigger_inputs = []
-                    for input_name, input_data in trigger_data["inputs"].items():
-                        trigger_inputs.append(TriggerInput(input_name, input_data["type"], input_data["value"]))
-                    triggers.append(Trigger(trigger_data["path"], trigger_inputs))
-                deployments.append(Deployment(deployment_name, triggers, parameters={}))
-            stage = Stage(stage_template["description"], stage_template["sequence"], deployments)
-            self.stages.append(stage)
-
-    def process(self):
-        for stage in sorted(self.stages, key=lambda s: s.sequence):
-            print(f"Processing stage: {stage.description}")
-            for deployment in stage.deployments:
-                if deployment.is_active(self.changed_files):
-                    print(f"  - Deploying {deployment.name}")
-                else:
-                    print(f"  - Skipping {deployment.name}")
-
-    def to_yaml(self) -> str:
-        workflow_dict = {}
-        for stage in self.stages:
-            stage_dict = {
-                "description": stage.description,
-                "deployments": {}
-            }
-            for deployment in stage.deployments:
-                stage_dict["deployments"][deployment.name] = {
-                    "parameters": deployment.parameters
-                }
-            workflow_dict[stage.sequence] = stage_dict
-
-        return yaml.dump(workflow_dict)
+    print(workflow.to_yaml())
 
 
-changed_files = ["/resource_config/projects/001/nonp/iam/roles.yaml",
-                 "/resource_config/projects/001/nonp/policies.yaml",
-                 "/plat/p/nonp/resources/lala.yaml",
-                 "/no/p/vpcsc/lala.yaml"]
+# TODO 
+# [DONE] Make sure if someone sets a match group that doesn't match, index error is caught
+# Validate the workflow_template
+# [DONE] Test more than one trigger before doing this
+# Accept changed files as an input
+# Add a logger instead of print with default output to output.log
+# Add cli with verbosity
 
-workflow = Workflow('workflow_template.yaml', changed_files)
-
-#workflow.process()
-
-print(workflow.to_yaml())
-'''
-for stage in workflow.stages:
-    print("Stage sequence:{}".format(stage.sequence))
-    for deployment in stage.deployments:
-        print(deployment.name)
-        #print("Deployment:".format(deployment))
-        for trigger in deployment.triggers:
-            print(trigger.path, trigger.is_triggered())
-# Pass changed files to trigger
-# Pass changed files to trigger
-# Pass changed files to trigger
-# Pass changed files to trigger
-'''
