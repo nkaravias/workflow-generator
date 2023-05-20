@@ -46,21 +46,36 @@ class Deployment:
         parameters = {}
         project_codes = set()
         has_inputs = False  # Track if the deployment has any input parameters
+        project_code_override = False
+
         for params_dict in active_triggers:
             if params_dict:
                 has_inputs = True  # Set the flag to True since there are input parameters
                 for key, value in params_dict.items():
-                    if key == "project_code":
+                    # Check if the trigger has a project_code of type scalar and value "all"
+                    if key == "project_code" and value == "all":
+                        project_code_override = True
+                        break
+                    # Check if the trigger has a project_code value that is not already in project_codes
+                    elif key == "project_code" and value not in project_codes:
                         project_codes.add(value)
+                    # Check if the parameter has been previously set
                     elif key in parameters:
+                        # If the parameter has been set and its value differs, raise an error
                         if parameters[key] != value:
                             raise ValueError(f"Scalar value mismatch detected for parameter '{key}' in active triggers.")
                     else:
+                        # Set the parameter value
                         parameters[key] = value
 
         if not has_inputs:
             return {}  # Return an empty dictionary if there are no input parameters
-        # Otherwise add to the comma separated 
-        parameters["project_code"] = ",".join(project_codes)
+        # Otherwise add to the comma separated
+        if project_code_override:
+            project_codes = set(["all"])
 
+        # Update the project_code parameter with the consolidated values
+        parameters["project_code"] = ",".join(project_codes)
         return parameters
+    
+    

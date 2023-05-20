@@ -18,11 +18,11 @@
             environment:
               type: "scalar"
               value: "dev"
-        - path: "/resource_config/projects/(\\d{3})/*.yaml"
+        - path: "/resource_config/projects/(\\d{3})/nonp/.*.yaml"
           inputs:
             project_code:
-              type: "regex_match_group"
-              value: 1
+              type: "scalar"
+              value: "all"
 - description: "This is the second stage"
   sequence: 2
   deployments:
