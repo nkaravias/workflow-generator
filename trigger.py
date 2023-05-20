@@ -47,7 +47,10 @@ class Trigger:
                 print(f"Trigger path {self.path} matched with file:{file}")
                 self.matching_files.append(file)
                 self.triggered = True
-                self.input_params.append(self.get_params(match_re))
+                try:
+                    self.input_params.append(self.get_params(match_re))
+                except ValueError as e:
+                    raise ValueError(f"Error processing trigger path '{self.path}' for file '{file}': {str(e)}")                    
             else:
                 print(f"Trigger path {self.path} did NOT match with file:{file}")
 
@@ -62,5 +65,11 @@ class Trigger:
             if input_param.input_type == 'scalar':
                 input_dict[input_param.name] = input_param.value
             elif input_param.input_type == 'regex_match_group':
-                input_dict[input_param.name] = match_re.group(int(input_param.value))
+                try:
+                    group_index = int(input_param.value)
+                    if group_index < 0 or group_index > match_re.lastindex:
+                        raise ValueError(f"Invalid match group index {group_index} in trigger input '{input_param.name}' of trigger path '{self.path}'")
+                    input_dict[input_param.name] = match_re.group(group_index)
+                except ValueError:
+                    raise ValueError(f"Invalid match group index '{input_param.value}' in trigger input '{input_param.name}' of trigger path '{self.path}'")
         return input_dict
