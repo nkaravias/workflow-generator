@@ -1,5 +1,6 @@
 from typing import List
 from trigger import Trigger
+from logger import workflow_logger
 
 
 class Deployment:
@@ -8,6 +9,7 @@ class Deployment:
         self.triggers = triggers
         self.parameters = {}
         self.active = False
+        workflow_logger.info(f"A new deployment: {self.name}")
 
 
     def process(self, changed_files: List[str]) -> bool:

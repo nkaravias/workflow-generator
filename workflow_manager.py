@@ -5,7 +5,7 @@ from trigger import Trigger, TriggerInput
 from deployment import Deployment
 from stage import Stage
 from workflow import Workflow
-
+from logger import workflow_logger
 
 class WorkflowManager:
     def __init__(self, workflow_template_path: str, changed_files: List[str]):
@@ -28,6 +28,11 @@ class WorkflowManager:
                     triggers.append(Trigger(trigger_data["path"], trigger_inputs))
                 deployment = Deployment(deployment_name, triggers)
                 deployment.process(self.changed_files)
+                if deployment.active:
+                    for trigger in deployment.triggers:
+                        if trigger.triggered:
+                            workflow_logger.debug(f"Trigger {trigger.path} triggered by changed files {trigger.matching_files}")
+                workflow_logger.info(f"Calculated deployment {deployment.name} with parameters {deployment.parameters}")
                 stage.add_deployment(deployment)
             workflow.add_stage(stage)
 
