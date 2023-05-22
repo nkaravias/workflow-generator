@@ -1,12 +1,15 @@
 import re
 from typing import List
 
+from logger import workflow_logger
+
 
 class TriggerInput:
     def __init__(self, name: str, input_type: str, value: str):
         self.name = name
         self.input_type = input_type
         self.value = value
+        #workflow_logger.debug(f"A new trigger input: {self.name} {self.input_type}, {self.value}")
 
     def __str__(self):
         return f"{self.name}: {self.value} ({self.input_type})"
@@ -21,7 +24,8 @@ class Trigger:
         # {service_tier="nonp", project_code="002"}] 
         self.matching_files = [] # the path of the files that have matched to a trigger path regex
         self.triggered = False
-
+        #workflow_logger.info(f"Creating trigger for path: {self.path}")
+        #workflow_logger.debug(f"A new trigger: {self.path}")
 
 
     def process(self, changed_files: List[str]) -> dict:
@@ -38,13 +42,14 @@ class Trigger:
 + if scalar
 +   if different than previous --> error
         '''
+        workflow_logger.debug(f"Processing trigger {self.path}")
         for file in changed_files:
             # Convert to raw string so we don't have to escape all the backslashes
             # for the path string
             raw_path = r"" + self.path
             match_re = re.match(raw_path, file)
             if match_re:
-                print(f"Trigger path {self.path} matched with file:{file}")
+                workflow_logger.debug(f"[TRIGGER MATCH]: Trigger path {self.path} matched with file: {file}")
                 self.matching_files.append(file)
                 self.triggered = True
                 try:
@@ -52,7 +57,7 @@ class Trigger:
                 except ValueError as e:
                     raise ValueError(f"Error processing trigger path '{self.path}' for file '{file}': {str(e)}")                    
             else:
-                print(f"Trigger path {self.path} did NOT match with file:{file}")
+                workflow_logger.debug(f"[TRIGGER FAIL]: Trigger path {self.path} did NOT match with file: {file}")
 
     def get_params(self, match_re):
         ''' For a matched file, process the template trigger inputs
@@ -72,4 +77,5 @@ class Trigger:
                     input_dict[input_param.name] = match_re.group(group_index)
                 except ValueError:
                     raise ValueError(f"Invalid match group index '{input_param.value}' in trigger input '{input_param.name}' of trigger path '{self.path}'")
+        workflow_logger.debug(f"Calculated trigger parameter inputs: {input_dict}")
         return input_dict
