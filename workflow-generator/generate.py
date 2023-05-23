@@ -1,8 +1,15 @@
 from parser import create_parser
 from workflow_manager import WorkflowManager
+from logger import workflow_logger
 
 
 def create_workflow(args):
+    workflow_logger.info(args.changed_files_path)
+    workflow_logger.info(args.changed_files_path)
+    workflow_logger.info(args.changed_files_path)
+    workflow_logger.info(args.changed_files_path)
+    workflow_logger.info(args.changed_files_path)
+    workflow_logger.info(args.changed_files_path)
     changed_files = [
         "/resource_config/projects/001/nonp/abc.yaml",
         "/resource_config/projects/002/nonp/xyz.yaml",

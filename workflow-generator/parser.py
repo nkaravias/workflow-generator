@@ -8,6 +8,8 @@ def create_workflow_parser(subparsers):
     create_parser = workflow_subparsers.add_parser('create')
     create_parser.add_argument('-o', '--output-file', type=str, help='Path to the output file', required=True)
     create_parser.add_argument('-l', '--log-level', choices=['info', 'debug', 'warning', 'error', 'critical'], default='info', help='Log level')
+    create_parser.add_argument('-c', '--changed-files-path', type=str, help="Path to the changed files", required=True)
+
 
 def create_trigger_parser(subparsers):
     trigger_parser = subparsers.add_parser('trigger')
