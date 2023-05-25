@@ -4,12 +4,6 @@ from logger import workflow_logger
 
 
 def create_workflow(args):
-    workflow_logger.info(args.changed_files_path)
-    workflow_logger.info(args.changed_files_path)
-    workflow_logger.info(args.changed_files_path)
-    workflow_logger.info(args.changed_files_path)
-    workflow_logger.info(args.changed_files_path)
-    workflow_logger.info(args.changed_files_path)
     changed_files = [
         "/resource_config/projects/001/nonp/abc.yaml",
         "/resource_config/projects/002/nonp/xyz.yaml",
@@ -61,15 +55,6 @@ def main():
     else:
         parser.print_help()
 
+
 if __name__ == "__main__":
     main()
-
-
-# TODO 
-# Make sure if someone sets a match group that doesn't match, index error is caught
-# Validate the workflow_template
-# Test more than one trigger before doing this
-# Accept changed files as an input
-# Add a logger instead of print with default output to output.log
-# Add cli with verbosity
-

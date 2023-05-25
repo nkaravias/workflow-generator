@@ -2,6 +2,7 @@ import os
 import yaml
 
 class ChangedFiles:
+    ''' More of a plaholder for now '''
     def __init__(self, file_path):
         self.file_path = file_path
         self._validate_file()
