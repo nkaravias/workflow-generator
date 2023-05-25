@@ -37,3 +37,19 @@ class WorkflowManager:
             workflow.add_stage(stage)
 
         return workflow
+
+    def mock_workflow(self) -> Workflow:
+        workflow = Workflow(self.workflow_template_path, self.changed_files)
+        with open(self.workflow_template_path, 'r') as f:
+            template = yaml.safe_load(f)
+
+        for stage_template in template:
+            stage = Stage(stage_template["description"],
+                          stage_template["sequence"])
+            for deployment_name, deployment_data in stage_template["deployments"].items():
+                triggers = []
+                deployment = Deployment(deployment_name, triggers)
+                stage.add_deployment(deployment)
+            workflow.add_stage(stage)
+
+        return workflow

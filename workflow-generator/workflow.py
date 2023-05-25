@@ -18,9 +18,10 @@ class Workflow:
 
     def to_yaml(self) -> str:
         workflow_logger.debug("Writing workflow formatted output:")
-        workflow_dict = {}
+        workflow_list = []
         for stage in self.stages:
             stage_dict = {
+                "sequence": stage.sequence,
                 "description": stage.description,
                 "deployments": {}
             }
@@ -33,8 +34,8 @@ class Workflow:
                         deployment)
                     deployment_dict["parameters"] = deployment.parameters
                 stage_dict["deployments"][deployment.name] = deployment_dict
-            workflow_dict[stage.sequence] = stage_dict
-        return yaml.dump(workflow_dict)
+            workflow_list.append(stage_dict)
+        return yaml.dump(workflow_list)
 
     def get_deployment_matches(self, deployment: Deployment) -> List[dict]:
         matches = []
