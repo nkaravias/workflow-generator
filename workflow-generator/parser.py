@@ -14,6 +14,8 @@ def create_workflow_parser(subparsers):
                                'info', 'debug', 'warning', 'error', 'critical'], default='info', help='Log level')
     create_parser.add_argument('-c', '--changed-files-path',
                                type=str, help="Path to the changed files", required=True)
+    create_parser.add_argument('-w', '--workflow-template-path',
+                               type=str, help="Path to the workflow template file", required=True)
 
     create_parser = workflow_subparsers.add_parser(
         'mock', help="Creates a mocked workflow based on a workflow template, where all deployments are marked as inactive")
@@ -21,6 +23,8 @@ def create_workflow_parser(subparsers):
         '-o', '--output-file', type=str, help='Path to the output file', required=True)
     create_parser.add_argument('-l', '--log-level', choices=[
                                'info', 'debug', 'warning', 'error', 'critical'], default='info', help='Log level')
+    create_parser.add_argument('-w', '--workflow-template-path',
+                               type=str, help="Path to the workflow template file", required=True)
 
 
 def create_trigger_parser(subparsers):

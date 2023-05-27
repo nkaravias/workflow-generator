@@ -1,0 +1,6 @@
+- "/resource_config/projects/001/nonp/abc.yaml"
+- "/resource_config/projects/002/nonp/xyz.yaml"
+- "/platform_config/projects/003/nonp/123.yaml"
+- "/platform_config/projects/004/nonp/test.yaml"
+- "/platform_config/projects/006/test/secret.yaml"
+- "/platform_config/org/lala.yaml"
