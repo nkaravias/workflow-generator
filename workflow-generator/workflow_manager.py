@@ -6,6 +6,7 @@ from deployment import Deployment
 from stage import Stage
 from workflow import Workflow
 from logger import workflow_logger
+from file import File
 
 class WorkflowManager:
     def __init__(self, workflow_template_path: str, changed_files: List[str]):
@@ -13,9 +14,8 @@ class WorkflowManager:
         self.changed_files = changed_files
 
     def generate_workflow(self) -> Workflow:
-        workflow = Workflow(self.workflow_template_path, self.changed_files)
-        with open(self.workflow_template_path, 'r') as f:
-            template = yaml.safe_load(f)
+        workflow = Workflow(self.changed_files)
+        template = File(self.workflow_template_path).content
 
         for stage_template in template:
             stage = Stage(stage_template["description"], stage_template["sequence"])
@@ -39,9 +39,8 @@ class WorkflowManager:
         return workflow
 
     def mock_workflow(self) -> Workflow:
-        workflow = Workflow(self.workflow_template_path, self.changed_files)
-        with open(self.workflow_template_path, 'r') as f:
-            template = yaml.safe_load(f)
+        workflow = Workflow(self.changed_files)
+        template = File(self.workflow_template_path).content
 
         for stage_template in template:
             stage = Stage(stage_template["description"],

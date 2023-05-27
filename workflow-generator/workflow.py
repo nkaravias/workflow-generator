@@ -7,7 +7,7 @@ from logger import workflow_logger
 
 
 class Workflow:
-    def __init__(self, workflow_template: str, changed_files: List[str]):
+    def __init__(self, changed_files: List[str]):
         self.stages = []
         self.changed_files = changed_files
         workflow_logger.info("Generating new workflow")

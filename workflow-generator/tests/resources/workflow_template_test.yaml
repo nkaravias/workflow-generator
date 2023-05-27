@@ -1,0 +1,56 @@
+- description: "This is the first stage"
+  sequence: 1
+  deployments:
+    org:
+      triggers:
+        - path: "/resource_config/projects/002/nonp/xyz.yaml"
+          inputs: {}
+    project_core:
+      triggers:
+        - path: "/platform_config/projects/(\\d{3})/.*.yaml"
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
+            service_tier:
+              type: "scalar"
+              value: "nonp"
+            environment:
+              type: "scalar"
+              value: "dev"
+        - path: "/resource_config/projects/(\\d{3})/nonp/.*.yaml"
+          inputs:
+            project_code:
+              type: "scalar"
+              value: "all"
+- description: "This is the second stage"
+  sequence: 2
+  deployments:
+    lala_core:
+      triggers:
+        - path: "/platform_config/projects/(004)/nonp/test.yaml"
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
+    org_core:
+      triggers:
+        - path: "/platform_config/org/lala.yaml"
+          inputs: {}
+    network:
+      triggers:
+        - path: "/platform_config/network/*.yaml"
+          inputs:
+            project_code:
+              type: "regex_match_group"
+              value: 1
+- description: "This is the third stage"
+  sequence: 3
+  deployments:
+    secrets:
+      triggers:
+        - path: "/platform_config/projects/006/.*.secret.yaml"
+          inputs:
+            project_code:
+              type: "scalar"
+              value: "006"

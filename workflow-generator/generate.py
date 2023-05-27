@@ -1,19 +1,11 @@
 from parser import create_parser
 from workflow_manager import WorkflowManager
 from logger import workflow_logger
-
+from file import File
 
 def create_workflow(args):
-    changed_files = [
-        "/resource_config/projects/001/nonp/abc.yaml",
-        "/resource_config/projects/002/nonp/xyz.yaml",
-        "/platform_config/projects/003/nonp/123.yaml",
-        "/platform_config/projects/004/nonp/test.yaml",
-        "/platform_config/projects/006/test/secret.yaml",
-        "/platform_config/org/lala.yaml"
-    ]
-
-    workflow_template_path = "../workflow_template_test.yaml"
+    changed_files = File(args.changed_files_path).content
+    workflow_template_path = args.workflow_template_path
     workflow_manager = WorkflowManager(workflow_template_path, changed_files)
     workflow = workflow_manager.generate_workflow()
 
@@ -22,8 +14,7 @@ def create_workflow(args):
 
 
 def mock_workflow(args):
-    print(args)
-    workflow_template_path = "../workflow_template_test.yaml"
+    workflow_template_path = args.workflow_template_path
     workflow_manager = WorkflowManager(workflow_template_path, [])
     workflow = workflow_manager.mock_workflow()
 
