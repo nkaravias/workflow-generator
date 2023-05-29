@@ -34,6 +34,11 @@ def create_trigger_parser(subparsers):
     validate_parser = trigger_subparsers.add_parser('validate')
     validate_parser.add_argument('-l', '--log-level', choices=['info', 'debug', 'warning', 'error', 'critical'], default='info', help='Log level')
 
+    validate_parser = trigger_subparsers.add_parser('validate-regex')
+    validate_parser.add_argument('-l', '--log-level', choices=['info', 'debug', 'warning', 'error', 'critical'], default='info', help='Log level')
+    validate_parser.add_argument('-tp', '--trigger-path', type=str, help='Path to the trigger file', required=True)
+    validate_parser.add_argument('-cf', '--changed-files', type=str, help='csv list of changed files', required=True)
+
 
 def create_parser():
     parser = argparse.ArgumentParser(prog='generate.py')
