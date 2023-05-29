@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from parser import create_parser
 from workflow_manager import WorkflowManager, TriggerManager
 from logger import workflow_logger

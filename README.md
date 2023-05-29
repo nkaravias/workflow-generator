@@ -2,8 +2,8 @@
 Generates sequential workflows off of a base template. Check test/resources for details.
 
 ```
-python generate.py 
-usage: generate.py [-h] {workflow,trigger} ...
+wfgen.py 
+usage: wfgen.py [-h] {workflow,trigger} ...
 
 positional arguments:
   {workflow,trigger}
@@ -14,8 +14,8 @@ optional arguments:
 
 ## workflow create
 ```
-python generate.py workflow create --help
-usage: generate.py workflow create [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -c CHANGED_FILES_PATH -w WORKFLOW_TEMPLATE_PATH
+wfgen.py workflow create --help
+usage: wfgen.py workflow create [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -c CHANGED_FILES_PATH -w WORKFLOW_TEMPLATE_PATH
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -31,14 +31,14 @@ optional arguments:
 
 E.g
 ```
-python generate.py workflow create -o out.yaml -c tests/resources/git_changes.yaml --workflow-template-path tests/reso
+wfgen.py workflow create -o out.yaml -c tests/resources/git_changes.yaml --workflow-template-path tests/reso
 urces/workflow_template_test.yaml
 ```
 
 ## workflow mock
 ```
-python generate.py workflow mock --help
-usage: generate.py workflow mock [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -w WORKFLOW_TEMPLATE_PATH
+wfgen.py workflow mock --help
+usage: wfgen.py workflow mock [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -w WORKFLOW_TEMPLATE_PATH
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -51,7 +51,7 @@ optional arguments:
 ```
 
 E.g
-```python generate.py workflow mock -o mock.yaml --workflow-template-path tests/resources/workflow_template_test.yaml
+```wfgen.py workflow mock -o mock.yaml --workflow-template-path tests/resources/workflow_template_test.yaml
 2023-05-29 11:19:22,533 - INFO - Generating new workflow
 2023-05-29 11:19:22,537 - INFO - A new deployment: org
 2023-05-29 11:19:22,537 - INFO - A new deployment: project_core
@@ -68,7 +68,7 @@ E.g
 ## trigger validate-regex
 
 ```
-python generate.py trigger validate-regex --trigger-path "/platform_config/projects/(\\d{3})/.*.yaml" --changed-file "
+wfgen.py trigger validate-regex --trigger-path "/platform_config/projects/(\\d{3})/.*.yaml" --changed-file "
 /platform_config/projects/001/lala.yl,/platform_config/projects/006/koko.yaml"
 ```
 
