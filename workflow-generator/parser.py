@@ -41,7 +41,7 @@ def create_trigger_parser(subparsers):
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(prog='generate.py')
+    parser = argparse.ArgumentParser(prog='wfgen.py')
     subparsers = parser.add_subparsers(dest='command')
 
     create_workflow_parser(subparsers)
