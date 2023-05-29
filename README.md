@@ -1,86 +1,80 @@
+# Workflow-generator
+Generates sequential workflows off of a base template. Check test/resources for details.
 
-Trigger class
-properties:
-  path: "/plat/"
-  inputs: [input TriggerInput]
+```
+python generate.py 
+usage: generate.py [-h] {workflow,trigger} ...
 
-is_triggerered()
+positional arguments:
+  {workflow,trigger}
 
-TriggerInput:
-  name: 
-  type:
-  value
+optional arguments:
+  -h, --help          show this help message and exit
+```
 
-is_triggered()
+## workflow create
+```
+python generate.py workflow create --help
+usage: generate.py workflow create [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -c CHANGED_FILES_PATH -w WORKFLOW_TEMPLATE_PATH
 
-Deployment:`
-  name:
-  triggers: [trigger Trigger]
-  
-is_active()
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        Path to the output file
+  -l {info,debug,warning,error,critical}, --log-level {info,debug,warning,error,critical}
+                        Log level
+  -c CHANGED_FILES_PATH, --changed-files-path CHANGED_FILES_PATH
+                        Path to the changed files
+  -w WORKFLOW_TEMPLATE_PATH, --workflow-template-path WORKFLOW_TEMPLATE_PATH
+                        Path to the workflow template file
+```
 
+E.g
+```
+python generate.py workflow create -o out.yaml -c tests/resources/git_changes.yaml --workflow-template-path tests/reso
+urces/workflow_template_test.yaml
+```
 
-Stage:
-  sequence: int
-  deployments: [deployment Deployment]
+## workflow mock
+```
+python generate.py workflow mock --help
+usage: generate.py workflow mock [-h] -o OUTPUT_FILE [-l {info,debug,warning,error,critical}] -w WORKFLOW_TEMPLATE_PATH
 
-Workflow(workflow_template, changed_files):
-  stages: [stage Stage]
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT_FILE, --output-file OUTPUT_FILE
+                        Path to the output file
+  -l {info,debug,warning,error,critical}, --log-level {info,debug,warning,error,critical}
+                        Log level
+  -w WORKFLOW_TEMPLATE_PATH, --workflow-template-path WORKFLOW_TEMPLATE_PATH
+                        Path to the workflow template file
+```
 
-  The TriggerInput class. It has a name, a type and a value. The type can be either "scalar" or "regex_match_group". If the type is "scalar" the value must be a string. If the type is "regex_match_group", the value must be an integer.
+E.g
+```python generate.py workflow mock -o mock.yaml --workflow-template-path tests/resources/workflow_template_test.yaml
+2023-05-29 11:19:22,533 - INFO - Generating new workflow
+2023-05-29 11:19:22,537 - INFO - A new deployment: org
+2023-05-29 11:19:22,537 - INFO - A new deployment: project_core
+2023-05-29 11:19:22,537 - DEBUG - Finished adding stage This is the first stage
+2023-05-29 11:19:22,537 - INFO - A new deployment: lala_core
+2023-05-29 11:19:22,537 - INFO - A new deployment: org_core
+2023-05-29 11:19:22,537 - INFO - A new deployment: network
+2023-05-29 11:19:22,537 - DEBUG - Finished adding stage This is the second stage
+2023-05-29 11:19:22,537 - INFO - A new deployment: secrets
+2023-05-29 11:19:22,537 - DEBUG - Finished adding stage This is the third stage
+2023-05-29 11:19:22,538 - DEBUG - Writing workflow formatted output:
+```
 
-  The Trigger class. It has a path property (string) and an inputs property. The inputs property is a list of one to many TriggerInput objects. The Trigger class also has an is_triggered() method.
+## trigger validate-regex
 
-  The Deployment class. It has a name property and a triggers property. The triggers property is a list of one to many Trigger objects. The Deployment class also has a is_active() method.
+```
+python generate.py trigger validate-regex --trigger-path "/platform_config/projects/(\\d{3})/.*.yaml" --changed-file "
+/platform_config/projects/001/lala.yl,/platform_config/projects/006/koko.yaml"
+```
 
-  The Stage class. It han a sequence property (integer) and a deployments property. The deployments property is a list of Deployment objects.
-
-    The workflow class access a workflow_template argument (which has the contents of the workflow_template.yaml file) and a changed_files argument that is the contents of the changed_files list. 
-
-
-a deployment unit has many triggers
-
-A trigger is triggered if its path regex matches a file that changed
-
-A deployment has expected paramters (in deployment_units) - the generator doesn't know this yet
-
-if a trigger is triggered (path matches with any file in changed_files):
-  set triggered = True
-  add the file that matched to matched_files
-  for each of its input parameters:
-    if its scalar, 
-
-project_core deployment has one trigger:
-lets say trigger is /resource/projects/(\\d{3})/.*.yaml
-
-changed_files=
-res/project/001/lala.yaml
-res/project/002/koko.yaml
-
-
-trigger is triggered
-matching files = 
-res/project/001/lala.yaml
-res/project/002/koko.yaml
-
-trigger has one regex input 
-lets say trigger is /resource/projects/(\\d{3})/.*.yaml
-
-
-for each matching file of this trigger
-if regex
-  if project code
-    project_code = list of matches
-    (append / insert)
-    at the end of matching files, if all is in the list, set it to [all]
-if scalar
-  if different than previous --> error
-
-
-
-
-
-
-
-
-
+```
+2023-05-29 11:17:38,556 - DEBUG - Processing trigger /platform_config/projects/(\d{3})/.*.yaml
+2023-05-29 11:17:38,556 - DEBUG - [TRIGGER FAIL]: Trigger path /platform_config/projects/(\d{3})/.*.yaml did NOT match with file: /platform_config/projects/001/lala.yl
+2023-05-29 11:17:38,556 - DEBUG - [TRIGGER MATCH]: Trigger path /platform_config/projects/(\d{3})/.*.yaml matched with file: /platform_config/projects/006/koko.yaml
+2023-05-29 11:17:38,556 - DEBUG - Calculated trigger parameter inputs: {}
+```
