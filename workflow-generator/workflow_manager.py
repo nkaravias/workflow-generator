@@ -52,3 +52,12 @@ class WorkflowManager:
             workflow.add_stage(stage)
 
         return workflow
+
+class TriggerManager:
+    def __init__(self, trigger_path, changed_files, inputs):
+        self.trigger_path = trigger_path
+        self.changed_files = changed_files.split(',')
+        self.trigger = Trigger(self.trigger_path, inputs)
+
+    def validate_regex_trigger(self):
+        result = self.trigger.process(self.changed_files)
